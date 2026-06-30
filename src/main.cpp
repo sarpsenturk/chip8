@@ -1,6 +1,6 @@
-#include <cstdio>
+#include "chip8.hpp"
 
 int main()
 {
-    std::puts("Hello world");
+    Chip8 chip8;
 }
