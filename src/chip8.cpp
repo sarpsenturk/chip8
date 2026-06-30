@@ -38,3 +38,36 @@ Chip8::Chip8()
     std::memcpy(memory_.data() + fontset_start_addr, fontset.data(), 80);
     debug_log("Fontset loaded into memory at {:#x}", fontset_start_addr);
 }
+
+void Chip8::fetch()
+{
+    const auto high = memory_[pc_];
+    const auto low = memory_[pc_ + 1];
+    instruction_ = static_cast<std::uint16_t>((high << 8u) | low);
+    pc_ += 2;
+}
+
+std::uint16_t Chip8::op_var_nnn() const noexcept
+{
+    return instruction_ & 0xfff;
+}
+
+std::uint8_t Chip8::op_var_n() const noexcept
+{
+    return instruction_ & 0xf;
+}
+
+std::uint8_t Chip8::op_var_x() const noexcept
+{
+    return instruction_ >> 8u & 0xf;
+}
+
+std::uint8_t Chip8::op_var_y() const noexcept
+{
+    return instruction_ >> 12u;
+}
+
+std::uint8_t Chip8::op_var_kk() const noexcept
+{
+    return static_cast<std::uint8_t>(instruction_ & 0xff);
+}

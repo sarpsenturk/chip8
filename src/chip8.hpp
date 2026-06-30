@@ -15,6 +15,8 @@ public:
 
     Chip8();
 
+    void fetch(); // Fetch the next instruction into the instruction register
+
 private:
     void op_0nnn(); // Jump to a machine code routine at nnn
     void op_00E0(); // Clear the display
@@ -52,12 +54,24 @@ private:
     void op_Fx55(); // Store registers V0 through Vx in memory starting at location I
     void op_Fx65(); // Read registers V0 through Vx from memory starting at location I
 
+    // A 12-bit value, the lowest 12 bits of the instruction
+    [[nodiscard]] std::uint16_t op_var_nnn() const noexcept;
+    // A 4-bit value, the lowest 4 bits of the instruction
+    [[nodiscard]] std::uint8_t op_var_n() const noexcept;
+    // A 4-bit value, the lower 4 bits of the high byte of the instruction
+    [[nodiscard]] std::uint8_t op_var_x() const noexcept;
+    // A 4-bit value, the upper 4 bits of the low byte of the instruction
+    [[nodiscard]] std::uint8_t op_var_y() const noexcept;
+    // An 8-bit value, the lowest 8 bits of the instruction
+    [[nodiscard]] std::uint8_t op_var_kk() const noexcept;
+
     std::array<std::uint8_t, 4096> memory_;                             // Random access memory 4kb
     std::array<std::uint8_t, 16> Vx_;                                   // General purpose registers V0-VF
     std::uint16_t I_;                                                   // Index register
     std::uint8_t dt_;                                                   // Delay timer
     std::uint8_t st_;                                                   // Sound timer
     std::uint16_t pc_;                                                  // Program counter
+    std::uint16_t instruction_;                                         // Current instruction
     std::uint8_t sp_;                                                   // Stack pointer
     std::array<std::uint16_t, max_stack_depth> stack_;                  // Subroutine stack
     std::array<std::uint8_t, 16> keypad_;                               // 16-key hexadecimal keypad
