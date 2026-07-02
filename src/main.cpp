@@ -5,11 +5,9 @@
 #include <SDL3/SDL_main.h>
 #include <SDL3/SDL_render.h>
 
-#include <chrono>
 #include <string>
 
-static constexpr auto cpu_hz = 500.0;
-static constexpr auto timer_hz = 60.0;
+static constexpr auto cycles_per_frame = 10;
 
 int main(int argc, const char** argv)
 {
@@ -33,6 +31,7 @@ int main(int argc, const char** argv)
 
     // Create renderer
     SDL_Renderer* renderer = SDL_CreateRenderer(window, nullptr);
+    SDL_SetRenderVSync(renderer, 1);
 
     // Create chip8 framebuffer
     SDL_Texture* texture = SDL_CreateTexture(
@@ -51,8 +50,6 @@ int main(int argc, const char** argv)
     }
 
     // Main loop
-    double cpu_accumulator = 0.0;
-    double timer_accumulator = 0.0;
     auto last = std::chrono::high_resolution_clock::now();
     while (true) {
         auto now = std::chrono::high_resolution_clock::now();
@@ -119,17 +116,13 @@ int main(int argc, const char** argv)
             }
         }
 
-        cpu_accumulator += dt * cpu_hz;
-        timer_accumulator += dt * timer_hz;
-
-        while (cpu_accumulator >= 1.0) {
+        for (int i = 0; i < cycles_per_frame; ++i) {
             chip8.cycle();
-            cpu_accumulator -= 1.0;
+            if (chip8.draw_flag()) {
+                break;
+            }
         }
-        while (timer_accumulator >= 1.0) {
-            chip8.tick_timers();
-            timer_accumulator -= 1.0;
-        }
+        chip8.tick_timers();
 
         SDL_UpdateTexture(texture, nullptr, chip8.pixels(), Chip8::display_pitch);
         SDL_RenderClear(renderer);

@@ -182,6 +182,9 @@ void Chip8::execute(OpFunc func)
 
 void Chip8::cycle()
 {
+    // Reset vblank wait
+    draw_flag_ = false;
+
     // Fetch current instruction
     const auto opcode = fetch();
 
@@ -415,6 +418,9 @@ void Chip8::op_Dxyn()
             display_[index] ^= 0xFFFFFFFF;
         }
     }
+
+    // Set draw flag
+    draw_flag_ = true;
 }
 
 void Chip8::op_Ex9E()

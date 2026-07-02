@@ -31,6 +31,7 @@ public:
 
     [[nodiscard]] std::uint8_t* keys() { return keypad_.data(); }
     [[nodiscard]] std::uint32_t* pixels() { return display_.data(); }
+    [[nodiscard]] bool draw_flag() const noexcept { return draw_flag_; }
 
 private:
     void op_00E0();    // Clear the display
@@ -96,4 +97,5 @@ private:
     std::array<std::uint16_t, max_stack_depth> stack_ = {};                  // Subroutine stack
     std::array<std::uint8_t, 16> keypad_ = {};                               // 16-key hexadecimal keypad
     std::array<std::uint32_t, display_width * display_height> display_ = {}; // Monochrome display
+    bool draw_flag_ = false;                                                 // Boolean flag that indicates a draw has occured
 };
