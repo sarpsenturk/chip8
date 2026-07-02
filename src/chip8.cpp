@@ -376,24 +376,37 @@ void Chip8::op_Dxyn()
     const auto y = op_var_y();
     const auto n = op_var_n();
 
-    // Wrap sprite positions
-    const auto xpos = V_[x] % display_width;
-    const auto ypos = V_[y] % display_height;
+    // Set xpos = Vx % 64
+    const auto xpos = V_[x] & (display_width - 1);
+    // Set ypos = Vy % 32
+    const auto ypos = V_[y] & (display_height - 1);
 
-    // Reset Vf until a collision occurs
-    V_[0xf] = 0;
+    // Reset VF until a collision occurs
+    V_[0xF] = 0;
 
     for (std::uint8_t row = 0; row < n; ++row) {
+        if (ypos + row >= display_height) {
+            break;
+        }
+
         const auto sprite = memory_[I_ + row];
+
         for (std::uint8_t col = 0; col < 8; ++col) {
-            const auto src = sprite & (0x80 >> col);
-            auto& dst = display_[(ypos + row) * display_width + (xpos + col)];
-            if (src) {
-                if (dst) {
-                    V_[0xf] = 1;
-                }
-                dst ^= 0xffffffff;
+            if (xpos + col >= display_width) {
+                break;
             }
+
+            if (!(sprite & (0x80 >> col))) {
+                continue;
+            }
+
+            const auto index = (ypos + row) * display_width + xpos + col;
+
+            if (display_[index]) {
+                V_[0xF] = 1;
+            }
+
+            display_[index] ^= 0xFFFFFFFF;
         }
     }
 }
