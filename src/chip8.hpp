@@ -15,8 +15,13 @@ public:
     static constexpr auto display_pitch = sizeof(std::uint32_t) * display_width;
 
     static constexpr auto fontset_start_addr = 0x50;
+    static constexpr auto prog_start_addr = 0x200;
 
+    // Initializes the interpreter
     Chip8();
+
+    // Loads a ROM into memory at `prog_start_addr` (0x200)
+    bool load_rom(const char* path);
 
     std::uint16_t fetch();     // Fetch the next instruction into the instruction register
     OpFunc decode();           // Decode the instruction and return the op function pointer

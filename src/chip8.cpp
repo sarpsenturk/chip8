@@ -5,6 +5,7 @@
 #include <cstdio>
 #include <cstring>
 #include <format>
+#include <fstream>
 #include <functional>
 #include <random>
 #include <stdexcept>
@@ -51,6 +52,22 @@ Chip8::Chip8()
     debug_log("Chip8 interpreter");
     std::memcpy(memory_.data() + fontset_start_addr, fontset.data(), 80);
     debug_log("Fontset loaded into memory at {:#x}", fontset_start_addr);
+}
+
+bool Chip8::load_rom(const char* path)
+{
+    auto file = std::ifstream(path, std::ios::binary | std::ios::ate);
+    if (file.good()) {
+        const auto size = file.tellg();
+        file.seekg(0, std::ios::beg);
+        if (file.read(reinterpret_cast<char*>(memory_.data() + prog_start_addr), size)) {
+            return true;
+        } else {
+            return false;
+        }
+    } else {
+        return false;
+    }
 }
 
 std::uint16_t Chip8::fetch()

@@ -15,13 +15,17 @@ int main(int argc, const char** argv)
         return 1;
     }
     const auto scale = std::stoi(argv[1]);
-    const char* filename = argv[2];
+    const char* rom = argv[2];
 
     // Initialize SDL and platform layer
     Platform platform("Chip8", Chip8::display_width * scale, Chip8::display_height * scale);
 
     // Initialize interpreter
     Chip8 chip8;
+    if (!chip8.load_rom(rom)) {
+        SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Failed to open ROM: %s\n", rom);
+        return 1;
+    }
 
     // Main loop
     while (!platform.should_quit()) {
