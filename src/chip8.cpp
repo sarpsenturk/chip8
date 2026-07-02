@@ -208,6 +208,18 @@ void Chip8::tick_timers()
     }
 }
 
+void Chip8::set_key_down(std::uint8_t key)
+{
+    assert(key < 16 && "`key` must be in range [0, 16)");
+    keys_ |= (1u << key);
+}
+
+void Chip8::set_key_up(std::uint8_t key)
+{
+    assert(key < 16 && "`key` must be in range [0, 16)");
+    keys_ &= ~(1u << key);
+}
+
 void Chip8::op_00E0()
 {
     std::memset(display_.data(), 0, sizeof(display_));
@@ -426,7 +438,7 @@ void Chip8::op_Dxyn()
 void Chip8::op_Ex9E()
 {
     const auto x = op_var_x();
-    if (keypad_[V_[x]]) {
+    if (keys_ & (1u << V_[x])) {
         pc_ += 2;
     }
 }
@@ -434,7 +446,7 @@ void Chip8::op_Ex9E()
 void Chip8::op_ExA1()
 {
     const auto x = op_var_x();
-    if (!keypad_[V_[x]]) {
+    if (!(keys_ & (1u << V_[x]))) {
         pc_ += 2;
     }
 }
@@ -448,13 +460,19 @@ void Chip8::op_Fx07()
 void Chip8::op_Fx0A()
 {
     const auto x = op_var_x();
-    for (std::uint8_t key = 0; key < keypad_.size(); ++key) {
-        if (keypad_[key]) {
-            V_[x] = key;
-            return;
+    if (keys_ < previous_keys_) {
+        const auto diff = previous_keys_ - keys_;
+        for (std::uint8_t i = 0; i < 16; ++i) {
+            if (diff >> i & 1u) {
+                V_[x] = i;
+                break;
+            }
         }
+        previous_keys_ = 0;
+    } else {
+        previous_keys_ = keys_;
+        pc_ -= 2; // 'Wait' until a key press
     }
-    pc_ -= 2; // 'Wait' until a key press
 }
 
 void Chip8::op_Fx15()

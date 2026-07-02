@@ -8,6 +8,45 @@
 #include <string>
 
 static constexpr auto cycles_per_frame = 10;
+static constexpr auto keymap(SDL_Keycode keycode)
+{
+    switch (keycode) {
+        case SDLK_X:
+            return 0;
+        case SDLK_1:
+            return 1;
+        case SDLK_2:
+            return 2;
+        case SDLK_3:
+            return 3;
+        case SDLK_Q:
+            return 4;
+        case SDLK_W:
+            return 5;
+        case SDLK_E:
+            return 6;
+        case SDLK_A:
+            return 7;
+        case SDLK_S:
+            return 8;
+        case SDLK_D:
+            return 9;
+        case SDLK_Z:
+            return 10;
+        case SDLK_C:
+            return 11;
+        case SDLK_4:
+            return 12;
+        case SDLK_R:
+            return 13;
+        case SDLK_F:
+            return 14;
+        case SDLK_V:
+            return 15;
+        default:
+            return -1;
+    }
+}
 
 int main(int argc, const char** argv)
 {
@@ -61,58 +100,18 @@ int main(int argc, const char** argv)
             switch (event.type) {
                 case SDL_EVENT_QUIT:
                     goto exit;
-                case SDL_EVENT_KEY_DOWN:
-                case SDL_EVENT_KEY_UP:
-                    switch (event.key.key) {
-                        case SDLK_X:
-                            chip8.keys()[0] = event.key.down;
-                            break;
-                        case SDLK_1:
-                            chip8.keys()[1] = event.key.down;
-                            break;
-                        case SDLK_2:
-                            chip8.keys()[2] = event.key.down;
-                            break;
-                        case SDLK_3:
-                            chip8.keys()[3] = event.key.down;
-                            break;
-                        case SDLK_Q:
-                            chip8.keys()[4] = event.key.down;
-                            break;
-                        case SDLK_W:
-                            chip8.keys()[5] = event.key.down;
-                            break;
-                        case SDLK_E:
-                            chip8.keys()[6] = event.key.down;
-                            break;
-                        case SDLK_A:
-                            chip8.keys()[7] = event.key.down;
-                            break;
-                        case SDLK_S:
-                            chip8.keys()[8] = event.key.down;
-                            break;
-                        case SDLK_D:
-                            chip8.keys()[9] = event.key.down;
-                            break;
-                        case SDLK_Z:
-                            chip8.keys()[0xa] = event.key.down;
-                            break;
-                        case SDLK_C:
-                            chip8.keys()[0xb] = event.key.down;
-                            break;
-                        case SDLK_4:
-                            chip8.keys()[0xc] = event.key.down;
-                            break;
-                        case SDLK_R:
-                            chip8.keys()[0xd] = event.key.down;
-                            break;
-                        case SDLK_F:
-                            chip8.keys()[0xe] = event.key.down;
-                            break;
-                        case SDLK_V:
-                            chip8.keys()[0xf] = event.key.down;
-                            break;
+                case SDL_EVENT_KEY_DOWN: {
+                    if (const auto key = keymap(event.key.key); key != -1) {
+                        chip8.set_key_down(static_cast<std::uint8_t>(key));
+                        SDL_Log("Keydown = %i\n", key);
                     }
+                } break;
+                case SDL_EVENT_KEY_UP: {
+                    if (const auto key = keymap(event.key.key); key != -1) {
+                        chip8.set_key_up(static_cast<std::uint8_t>(key));
+                        SDL_Log("Keyup = %i\n", key);
+                    }
+                } break;
             }
         }
 
