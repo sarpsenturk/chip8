@@ -84,15 +84,15 @@ private:
     // Pushes an address onto the stack
     void stack_push(std::uint16_t value);
 
-    std::array<std::uint8_t, 4096> memory_;                             // Random access memory 4kb
-    std::array<std::uint8_t, 16> V_;                                    // General purpose registers V0-VF
-    std::uint16_t I_;                                                   // Index register
-    std::uint8_t dt_;                                                   // Delay timer
-    std::uint8_t st_;                                                   // Sound timer
-    std::uint16_t pc_;                                                  // Program counter
-    std::uint16_t instruction_;                                         // Current instruction
-    std::uint8_t sp_;                                                   // Stack pointer
-    std::array<std::uint16_t, max_stack_depth> stack_;                  // Subroutine stack
-    std::array<std::uint8_t, 16> keypad_;                               // 16-key hexadecimal keypad
-    std::array<std::uint32_t, display_width * display_height> display_; // Monochrome display
+    std::array<std::uint8_t, 4096> memory_ = {};                             // Random access memory 4kb
+    std::array<std::uint8_t, 16> V_ = {};                                    // General purpose registers V0-VF
+    std::uint16_t I_ = 0;                                                    // Index register
+    std::uint8_t dt_ = 0;                                                    // Delay timer
+    std::uint8_t st_ = 0;                                                    // Sound timer
+    std::uint16_t pc_ = prog_start_addr;                                     // Program counter
+    std::uint16_t instruction_ = 0;                                          // Current instruction
+    std::uint8_t sp_ = 0;                                                    // Stack pointer
+    std::array<std::uint16_t, max_stack_depth> stack_ = {};                  // Subroutine stack
+    std::array<std::uint8_t, 16> keypad_ = {};                               // 16-key hexadecimal keypad
+    std::array<std::uint32_t, display_width * display_height> display_ = {}; // Monochrome display
 };

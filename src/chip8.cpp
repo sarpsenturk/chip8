@@ -52,6 +52,7 @@ Chip8::Chip8()
     debug_log("Chip8 interpreter");
     std::memcpy(memory_.data() + fontset_start_addr, fontset.data(), 80);
     debug_log("Fontset loaded into memory at {:#x}", fontset_start_addr);
+    debug_log("PC = {:#x}", pc_);
 }
 
 bool Chip8::load_rom(const char* path)
@@ -61,6 +62,7 @@ bool Chip8::load_rom(const char* path)
         const auto size = file.tellg();
         file.seekg(0, std::ios::beg);
         if (file.read(reinterpret_cast<char*>(memory_.data() + prog_start_addr), size)) {
+            debug_log("Loaded ROM {} with size {}", path, static_cast<int>(size));
             return true;
         } else {
             return false;
@@ -81,10 +83,14 @@ Chip8::OpFunc Chip8::decode()
 {
     switch ((instruction_ & 0xf000) >> 12u) { // Switch on the high nibble
         case 0:
-            if (instruction_ == 0x00E0)
+            if (instruction_ == 0x00E0) {
                 return &Chip8::op_00E0;
-            if (instruction_ == 0x00EE)
+            }
+            if (instruction_ == 0x00EE) {
                 return &Chip8::op_00EE;
+            }
+            debug_log("invalid instruction: {:#x}", instruction_);
+            return &Chip8::op_INVALID;
         case 1:
             return &Chip8::op_1nnn;
         case 2:
@@ -178,6 +184,7 @@ void Chip8::cycle()
 {
     // Fetch current instruction
     const auto opcode = fetch();
+    debug_log("{:#x} {:#x}", pc_, opcode);
 
     // Increment program counter
     pc_ += 2;
@@ -292,7 +299,7 @@ void Chip8::op_8xy4()
     const auto x = op_var_x();
     const auto y = op_var_y();
     const auto result = static_cast<std::uint16_t>(V_[x] + V_[y]);
-    V_[0xf] = result & 0x100;
+    V_[0xf] = result > 0xff;
     V_[x] = static_cast<std::uint8_t>(result);
 }
 
@@ -322,7 +329,7 @@ void Chip8::op_8xy7()
 void Chip8::op_8xyE()
 {
     const auto x = op_var_x();
-    V_[0xf] = V_[x] & 0x800;
+    V_[0xf] = (V_[x] & 0x80) >> 7u;
     V_[x] <<= 1u;
 }
 
@@ -453,7 +460,7 @@ void Chip8::op_Fx33()
 void Chip8::op_Fx55()
 {
     const auto x = op_var_x();
-    for (std::uint8_t i = 0; i < x; ++i) {
+    for (std::uint8_t i = 0; i <= x; ++i) {
         memory_[I_ + i] = V_[i];
     }
 }
@@ -461,7 +468,7 @@ void Chip8::op_Fx55()
 void Chip8::op_Fx65()
 {
     const auto x = op_var_x();
-    for (std::uint8_t i = 0; i < x; ++i) {
+    for (std::uint8_t i = 0; i <= x; ++i) {
         V_[i] = memory_[I_ + i];
     }
 }
@@ -483,12 +490,12 @@ std::uint8_t Chip8::op_var_n() const noexcept
 
 std::uint8_t Chip8::op_var_x() const noexcept
 {
-    return instruction_ >> 8u & 0xf;
+    return (instruction_ >> 8u) & 0xf;
 }
 
 std::uint8_t Chip8::op_var_y() const noexcept
 {
-    return instruction_ >> 12u;
+    return (instruction_ >> 4u) & 0xf;
 }
 
 std::uint8_t Chip8::op_var_kk() const noexcept
@@ -499,11 +506,13 @@ std::uint8_t Chip8::op_var_kk() const noexcept
 std::uint16_t Chip8::stack_pop()
 {
     assert(sp_ > 0 && "Cannot pop the stack when it's empty");
-    return stack_[sp_--];
+    --sp_;
+    return stack_[sp_];
 }
 
 void Chip8::stack_push(std::uint16_t value)
 {
     assert(sp_ < max_stack_depth && "Stack has reached max depth");
-    stack_[sp_++] = value;
+    stack_[sp_] = value;
+    ++sp_;
 }
