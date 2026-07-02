@@ -27,6 +27,7 @@ public:
     OpFunc decode();           // Decode the instruction and return the op function pointer
     void execute(OpFunc func); // Execute the given instruction function
     void cycle();              // Execute 1 CPU cycle
+    void tick_timers();        // Decrement timers
 
     [[nodiscard]] std::uint8_t* keys() { return keypad_.data(); }
     [[nodiscard]] std::uint32_t* pixels() { return display_.data(); }

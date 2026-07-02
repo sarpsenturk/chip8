@@ -8,6 +8,9 @@
 #include <chrono>
 #include <string>
 
+static constexpr auto cpu_hz = 500.0;
+static constexpr auto timer_hz = 60.0;
+
 int main(int argc, const char** argv)
 {
     // Parse command line arguments
@@ -29,17 +32,30 @@ int main(int argc, const char** argv)
     }
 
     // Main loop
-    auto last_time = std::chrono::high_resolution_clock::now();
+    double cpu_accumulator = 0.0;
+    double timer_accumulator = 0.0;
+    auto last = std::chrono::high_resolution_clock::now();
     while (!platform.should_quit()) {
+        auto now = std::chrono::high_resolution_clock::now();
+        double dt = std::chrono::duration<double>(now - last).count();
+        last = now;
+
         platform.update(chip8.keys());
 
-        const auto now = std::chrono::high_resolution_clock::now();
-        const auto dt = std::chrono::duration<float, std::chrono::milliseconds::period>(now - last_time);
-        if (dt.count() > 3) {
-            last_time = now;
+        cpu_accumulator += dt * cpu_hz;
+        timer_accumulator += dt * timer_hz;
+
+        while (cpu_accumulator >= 1.0) {
             chip8.cycle();
-            platform.render(chip8.pixels(), Chip8::display_pitch);
+            cpu_accumulator -= 1.0;
         }
+        while (timer_accumulator >= 1.0) {
+            chip8.tick_timers();
+            timer_accumulator -= 1.0;
+        }
+
+        platform.render(chip8.pixels(), chip8.display_pitch);
     }
+
     return 0;
 }

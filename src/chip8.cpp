@@ -193,8 +193,10 @@ void Chip8::cycle()
 
     // Execute instruction
     execute(op_func);
+}
 
-    // Decrement timers if active
+void Chip8::tick_timers()
+{
     if (dt_ > 0) {
         --dt_;
     }
