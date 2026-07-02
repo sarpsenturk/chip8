@@ -299,38 +299,46 @@ void Chip8::op_8xy4()
     const auto x = op_var_x();
     const auto y = op_var_y();
     const auto result = static_cast<std::uint16_t>(V_[x] + V_[y]);
-    V_[0xf] = result > 0xff;
     V_[x] = static_cast<std::uint8_t>(result);
+    V_[0xf] = result > 0xff;
 }
 
 void Chip8::op_8xy5()
 {
     const auto x = op_var_x();
     const auto y = op_var_y();
-    V_[0xf] = static_cast<std::uint8_t>(V_[x] > V_[y]);
-    V_[x] -= V_[y];
+    const auto result = static_cast<std::uint8_t>(V_[x] - V_[y]);
+    const auto flag = static_cast<std::uint8_t>(V_[x] >= V_[y]);
+    V_[x] = result;
+    V_[0xf] = flag;
 }
 
 void Chip8::op_8xy6()
 {
     const auto x = op_var_x();
-    V_[0xf] = V_[x] & 1u;
-    V_[x] >>= 1u;
+    const auto result = V_[x] >> 1u;
+    const auto flag = V_[x] & 1u;
+    V_[x] = result;
+    V_[0xf] = flag;
 }
 
 void Chip8::op_8xy7()
 {
     const auto x = op_var_x();
     const auto y = op_var_y();
-    V_[0xf] = static_cast<std::uint8_t>(V_[y] > V_[x]);
-    V_[x] = static_cast<std::uint8_t>(V_[y] - V_[x]);
+    const auto result = static_cast<std::uint8_t>(V_[y] - V_[x]);
+    const auto flag = static_cast<std::uint8_t>(V_[y] >= V_[x]);
+    V_[x] = result;
+    V_[0xf] = flag;
 }
 
 void Chip8::op_8xyE()
 {
     const auto x = op_var_x();
-    V_[0xf] = (V_[x] & 0x80) >> 7u;
-    V_[x] <<= 1u;
+    const auto result = V_[x] << 1u;
+    const auto flag = (V_[x] & 0x80) >> 7u;
+    V_[x] = result;
+    V_[0xf] = flag;
 }
 
 void Chip8::op_9xy0()
