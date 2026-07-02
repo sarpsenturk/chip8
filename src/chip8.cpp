@@ -1,8 +1,11 @@
 #include "chip8.hpp"
 
+#include <cassert>
+#include <cstdint>
 #include <cstdio>
 #include <cstring>
 #include <format>
+#include <random>
 
 // Sprite data for the builtin fontset
 static constexpr auto fontset = std::array{
@@ -24,6 +27,15 @@ static constexpr auto fontset = std::array{
     0xF0, 0x80, 0xF0, 0x80, 0x80  // F
 };
 
+// Random number generator
+std::uint8_t random_byte()
+{
+    static std::random_device rd;
+    static std::default_random_engine re(rd());
+    static std::uniform_int_distribution<std::uint8_t> dist(0u, 255u);
+    return dist(re);
+}
+
 // Log a message to stdout
 template<typename... Args>
 void debug_log(std::format_string<Args...> fmt, Args&&... args)
@@ -37,6 +49,275 @@ Chip8::Chip8()
     debug_log("Chip8 interpreter");
     std::memcpy(memory_.data() + fontset_start_addr, fontset.data(), 80);
     debug_log("Fontset loaded into memory at {:#x}", fontset_start_addr);
+}
+
+void Chip8::op_00E0()
+{
+    std::memset(display_.data(), 0, sizeof(display_));
+}
+
+void Chip8::op_00EE()
+{
+    pc_ = stack_pop();
+}
+
+void Chip8::op_1nnn()
+{
+    pc_ = op_var_nnn();
+}
+
+void Chip8::op_2nnn()
+{
+    stack_push(pc_);
+    pc_ = op_var_nnn();
+}
+
+void Chip8::op_3xkk()
+{
+    const auto x = op_var_x();
+    const auto kk = op_var_kk();
+    if (V_[x] == kk) {
+        pc_ += 2;
+    }
+}
+
+void Chip8::op_4xkk()
+{
+    const auto x = op_var_x();
+    const auto kk = op_var_kk();
+    if (V_[x] != kk) {
+        pc_ += 2;
+    }
+}
+
+void Chip8::op_5xy0()
+{
+    const auto x = op_var_x();
+    const auto y = op_var_y();
+    if (V_[x] == V_[y]) {
+        pc_ += 2;
+    }
+}
+
+void Chip8::op_6xkk()
+{
+    const auto x = op_var_x();
+    const auto kk = op_var_kk();
+    V_[x] = kk;
+}
+
+void Chip8::op_7xkk()
+{
+    const auto x = op_var_x();
+    const auto kk = op_var_kk();
+    V_[x] += kk;
+}
+
+void Chip8::op_8xy0()
+{
+    const auto x = op_var_x();
+    const auto y = op_var_y();
+    V_[x] = V_[y];
+}
+
+void Chip8::op_8xy1()
+{
+    const auto x = op_var_x();
+    const auto y = op_var_y();
+    V_[x] |= V_[y];
+}
+
+void Chip8::op_8xy2()
+{
+    const auto x = op_var_x();
+    const auto y = op_var_y();
+    V_[x] &= V_[y];
+}
+
+void Chip8::op_8xy3()
+{
+    const auto x = op_var_x();
+    const auto y = op_var_y();
+    V_[x] ^= V_[y];
+}
+
+void Chip8::op_8xy4()
+{
+    const auto x = op_var_x();
+    const auto y = op_var_y();
+    const auto result = static_cast<std::uint16_t>(V_[x] + V_[y]);
+    V_[0xf] = result & 0x100;
+    V_[x] = static_cast<std::uint8_t>(result);
+}
+
+void Chip8::op_8xy5()
+{
+    const auto x = op_var_x();
+    const auto y = op_var_y();
+    V_[0xf] = static_cast<std::uint8_t>(V_[x] > V_[y]);
+    V_[x] -= V_[y];
+}
+
+void Chip8::op_8xy6()
+{
+    const auto x = op_var_x();
+    V_[0xf] = V_[x] & 1u;
+    V_[x] >>= 1u;
+}
+
+void Chip8::op_8xy7()
+{
+    const auto x = op_var_x();
+    const auto y = op_var_y();
+    V_[0xf] = static_cast<std::uint8_t>(V_[y] > V_[x]);
+    V_[x] = static_cast<std::uint8_t>(V_[y] - V_[x]);
+}
+
+void Chip8::op_8xyE()
+{
+    const auto x = op_var_x();
+    V_[0xf] = V_[x] & 0x800;
+    V_[x] <<= 1u;
+}
+
+void Chip8::op_9xy0()
+{
+    const auto x = op_var_x();
+    const auto y = op_var_y();
+    if (V_[x] != V_[y]) {
+        pc_ += 2;
+    }
+}
+
+void Chip8::op_Annn()
+{
+    I_ = op_var_nnn();
+}
+
+void Chip8::op_Bnnn()
+{
+    pc_ = static_cast<std::uint16_t>(op_var_nnn() + V_[0]);
+}
+
+void Chip8::op_Cxkk()
+{
+    const auto x = op_var_x();
+    const auto kk = op_var_kk();
+    const auto random = random_byte();
+    V_[x] = random & kk;
+}
+
+void Chip8::op_Dxyn()
+{
+    const auto x = op_var_x();
+    const auto y = op_var_y();
+    const auto n = op_var_n();
+
+    // Wrap sprite positions
+    const auto xpos = V_[x] % display_width;
+    const auto ypos = V_[y] % display_height;
+
+    // Reset Vf until a collision occurs
+    V_[0xf] = 0;
+
+    for (std::uint8_t row = 0; row < n; ++row) {
+        const auto sprite = memory_[I_ + row];
+        for (std::uint8_t col = 0; col < 8; ++col) {
+            const auto src = sprite & (0x80 >> col);
+            auto& dst = display_[(ypos + row) * display_width + (xpos + col)];
+            if (src) {
+                if (dst) {
+                    V_[0xf] = 1;
+                }
+                dst ^= 0xffffffff;
+            }
+        }
+    }
+}
+
+void Chip8::op_Ex9E()
+{
+    const auto x = op_var_x();
+    if (keypad_[V_[x]]) {
+        pc_ += 2;
+    }
+}
+
+void Chip8::op_ExA1()
+{
+    const auto x = op_var_x();
+    if (!keypad_[V_[x]]) {
+        pc_ += 2;
+    }
+}
+
+void Chip8::op_Fx07()
+{
+    const auto x = op_var_x();
+    V_[x] = dt_;
+}
+
+void Chip8::op_Fx0A()
+{
+    const auto x = op_var_x();
+    for (std::uint8_t key = 0; key < keypad_.size(); ++key) {
+        if (keypad_[key]) {
+            V_[x] = key;
+            return;
+        }
+    }
+    pc_ -= 2; // 'Wait' until a key press
+}
+
+void Chip8::op_Fx15()
+{
+    const auto x = op_var_x();
+    dt_ = V_[x];
+}
+
+void Chip8::op_Fx18()
+{
+    const auto x = op_var_x();
+    st_ = V_[x];
+}
+
+void Chip8::op_Fx1E()
+{
+    const auto x = op_var_x();
+    I_ += V_[x];
+}
+
+void Chip8::op_Fx29()
+{
+    const auto x = op_var_x();
+    I_ = static_cast<std::uint16_t>(fontset_start_addr + V_[x] * 5);
+}
+
+void Chip8::op_Fx33()
+{
+    const auto x = op_var_x();
+    auto value = V_[x];
+    memory_[I_ + 2] = value % 10;
+    value /= 10;
+    memory_[I_ + 1] = value % 10;
+    value /= 10;
+    memory_[I_] = value % 10;
+}
+
+void Chip8::op_Fx55()
+{
+    const auto x = op_var_x();
+    for (std::uint8_t i = 0; i < x; ++i) {
+        memory_[I_ + i] = V_[i];
+    }
+}
+
+void Chip8::op_Fx65()
+{
+    const auto x = op_var_x();
+    for (std::uint8_t i = 0; i < x; ++i) {
+        V_[i] = memory_[I_ + i];
+    }
 }
 
 void Chip8::fetch()
@@ -70,4 +351,16 @@ std::uint8_t Chip8::op_var_y() const noexcept
 std::uint8_t Chip8::op_var_kk() const noexcept
 {
     return static_cast<std::uint8_t>(instruction_ & 0xff);
+}
+
+std::uint16_t Chip8::stack_pop()
+{
+    assert(sp_ > 0 && "Cannot pop the stack when it's empty");
+    return stack_[sp_--];
+}
+
+void Chip8::stack_push(std::uint16_t value)
+{
+    assert(sp_ < max_stack_depth && "Stack has reached max depth");
+    stack_[sp_++] = value;
 }

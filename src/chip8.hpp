@@ -18,7 +18,6 @@ public:
     void fetch(); // Fetch the next instruction into the instruction register
 
 private:
-    void op_0nnn(); // Jump to a machine code routine at nnn
     void op_00E0(); // Clear the display
     void op_00EE(); // Return from a subroutine
     void op_1nnn(); // Jump to location nnn
@@ -65,8 +64,13 @@ private:
     // An 8-bit value, the lowest 8 bits of the instruction
     [[nodiscard]] std::uint8_t op_var_kk() const noexcept;
 
+    // Pops and returns an address from the stack
+    std::uint16_t stack_pop();
+    // Pushes an address onto the stack
+    void stack_push(std::uint16_t value);
+
     std::array<std::uint8_t, 4096> memory_;                             // Random access memory 4kb
-    std::array<std::uint8_t, 16> Vx_;                                   // General purpose registers V0-VF
+    std::array<std::uint8_t, 16> V_;                                    // General purpose registers V0-VF
     std::uint16_t I_;                                                   // Index register
     std::uint8_t dt_;                                                   // Delay timer
     std::uint8_t st_;                                                   // Sound timer
