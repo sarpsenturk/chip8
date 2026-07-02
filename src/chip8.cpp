@@ -184,7 +184,6 @@ void Chip8::cycle()
 {
     // Fetch current instruction
     const auto opcode = fetch();
-    debug_log("{:#x} {:#x}", pc_, opcode);
 
     // Increment program counter
     pc_ += 2;
@@ -278,6 +277,7 @@ void Chip8::op_8xy1()
     const auto x = op_var_x();
     const auto y = op_var_y();
     V_[x] |= V_[y];
+    V_[0xf] = 0;
 }
 
 void Chip8::op_8xy2()
@@ -285,6 +285,7 @@ void Chip8::op_8xy2()
     const auto x = op_var_x();
     const auto y = op_var_y();
     V_[x] &= V_[y];
+    V_[0xf] = 0;
 }
 
 void Chip8::op_8xy3()
@@ -292,6 +293,7 @@ void Chip8::op_8xy3()
     const auto x = op_var_x();
     const auto y = op_var_y();
     V_[x] ^= V_[y];
+    V_[0xf] = 0;
 }
 
 void Chip8::op_8xy4()
