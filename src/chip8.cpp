@@ -318,6 +318,8 @@ void Chip8::op_8xy5()
 void Chip8::op_8xy6()
 {
     const auto x = op_var_x();
+    const auto y = op_var_y();
+    V_[x] = V_[y];
     const auto result = V_[x] >> 1u;
     const auto flag = V_[x] & 1u;
     V_[x] = result;
@@ -337,6 +339,8 @@ void Chip8::op_8xy7()
 void Chip8::op_8xyE()
 {
     const auto x = op_var_x();
+    const auto y = op_var_y();
+    V_[x] = V_[y];
     const auto result = V_[x] << 1u;
     const auto flag = (V_[x] & 0x80) >> 7u;
     V_[x] = result;
