@@ -488,7 +488,7 @@ void Chip8::op_Fx55()
 {
     const auto x = op_var_x();
     for (std::uint8_t i = 0; i <= x; ++i) {
-        memory_[I_ + i] = V_[i];
+        memory_[I_++] = V_[i];
     }
 }
 
@@ -496,7 +496,7 @@ void Chip8::op_Fx65()
 {
     const auto x = op_var_x();
     for (std::uint8_t i = 0; i <= x; ++i) {
-        V_[i] = memory_[I_ + i];
+        V_[i] = memory_[I_++];
     }
 }
 
