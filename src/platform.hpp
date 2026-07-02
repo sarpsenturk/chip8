@@ -8,7 +8,7 @@
 class Platform
 {
 public:
-    Platform(const char* title, int width, int height);
+    Platform(const char* title, int width, int height, int scale);
     ~Platform();
 
     void update(std::uint8_t* keys);

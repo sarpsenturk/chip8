@@ -2,14 +2,15 @@
 
 #include <SDL3/SDL_events.h>
 
-Platform::Platform(const char* title, int width, int height)
+Platform::Platform(const char* title, int width, int height, int scale)
 {
     SDL_Init(SDL_INIT_VIDEO);
     SDL_SetAppMetadata("Chip8", "0.1.0", "");
 
-    window_ = SDL_CreateWindow(title, width, height, 0);
+    window_ = SDL_CreateWindow(title, width * scale, height * scale, 0);
     renderer_ = SDL_CreateRenderer(window_, nullptr);
     texture_ = SDL_CreateTexture(renderer_, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STREAMING, width, height);
+    SDL_SetTextureScaleMode(texture_, SDL_SCALEMODE_NEAREST);
 }
 
 Platform::~Platform()

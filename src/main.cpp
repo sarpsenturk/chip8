@@ -5,6 +5,7 @@
 #include <SDL3/SDL_log.h>
 #include <SDL3/SDL_main.h>
 
+#include <chrono>
 #include <string>
 
 int main(int argc, const char** argv)
@@ -18,7 +19,7 @@ int main(int argc, const char** argv)
     const char* rom = argv[2];
 
     // Initialize SDL and platform layer
-    Platform platform("Chip8", Chip8::display_width * scale, Chip8::display_height * scale);
+    Platform platform("Chip8", Chip8::display_width, Chip8::display_height, scale);
 
     // Initialize interpreter
     Chip8 chip8;
@@ -28,10 +29,17 @@ int main(int argc, const char** argv)
     }
 
     // Main loop
+    auto last_time = std::chrono::high_resolution_clock::now();
     while (!platform.should_quit()) {
         platform.update(chip8.keys());
-        chip8.cycle();
-        platform.render(chip8.pixels(), Chip8::display_pitch);
+
+        const auto now = std::chrono::high_resolution_clock::now();
+        const auto dt = std::chrono::duration<float, std::chrono::milliseconds::period>(now - last_time);
+        if (dt.count() > 3) {
+            last_time = now;
+            chip8.cycle();
+            platform.render(chip8.pixels(), Chip8::display_pitch);
+        }
     }
     return 0;
 }
