@@ -12,6 +12,7 @@ public:
 
     static constexpr auto display_width = 64;
     static constexpr auto display_height = 32;
+    static constexpr auto display_pitch = sizeof(std::uint32_t) * display_width;
 
     static constexpr auto fontset_start_addr = 0x50;
 
@@ -21,6 +22,9 @@ public:
     OpFunc decode();           // Decode the instruction and return the op function pointer
     void execute(OpFunc func); // Execute the given instruction function
     void cycle();              // Execute 1 CPU cycle
+
+    [[nodiscard]] std::uint8_t* keys() { return keypad_.data(); }
+    [[nodiscard]] std::uint32_t* pixels() { return display_.data(); }
 
 private:
     void op_00E0();    // Clear the display
