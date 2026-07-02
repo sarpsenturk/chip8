@@ -5,7 +5,9 @@
 #include <cstdio>
 #include <cstring>
 #include <format>
+#include <functional>
 #include <random>
+#include <stdexcept>
 
 // Sprite data for the builtin fontset
 static constexpr auto fontset = std::array{
@@ -49,6 +51,133 @@ Chip8::Chip8()
     debug_log("Chip8 interpreter");
     std::memcpy(memory_.data() + fontset_start_addr, fontset.data(), 80);
     debug_log("Fontset loaded into memory at {:#x}", fontset_start_addr);
+}
+
+std::uint16_t Chip8::fetch()
+{
+    const auto high = memory_[pc_];
+    const auto low = memory_[pc_ + 1];
+    return instruction_ = static_cast<std::uint16_t>((high << 8u) | low);
+}
+
+Chip8::OpFunc Chip8::decode()
+{
+    switch ((instruction_ & 0xf000) >> 12u) { // Switch on the high nibble
+        case 0:
+            if (instruction_ == 0x00E0)
+                return &Chip8::op_00E0;
+            if (instruction_ == 0x00EE)
+                return &Chip8::op_00EE;
+        case 1:
+            return &Chip8::op_1nnn;
+        case 2:
+            return &Chip8::op_2nnn;
+        case 3:
+            return &Chip8::op_3xkk;
+        case 4:
+            return &Chip8::op_4xkk;
+        case 5:
+            return &Chip8::op_5xy0;
+        case 6:
+            return &Chip8::op_6xkk;
+        case 7:
+            return &Chip8::op_7xkk;
+        case 8:
+            switch (instruction_ & 0xf) { // switch on the low nibble
+                case 0:
+                    return &Chip8::op_8xy0;
+                case 1:
+                    return &Chip8::op_8xy1;
+                case 2:
+                    return &Chip8::op_8xy2;
+                case 3:
+                    return &Chip8::op_8xy3;
+                case 4:
+                    return &Chip8::op_8xy4;
+                case 5:
+                    return &Chip8::op_8xy5;
+                case 6:
+                    return &Chip8::op_8xy6;
+                case 7:
+                    return &Chip8::op_8xy7;
+                case 0xE:
+                    return &Chip8::op_8xyE;
+                default:
+                    return &Chip8::op_INVALID;
+            }
+        case 9:
+            return &Chip8::op_9xy0;
+        case 0xA:
+            return &Chip8::op_Annn;
+        case 0xB:
+            return &Chip8::op_Bnnn;
+        case 0xC:
+            return &Chip8::op_Cxkk;
+        case 0xD:
+            return &Chip8::op_Dxyn;
+        case 0xE:
+            switch (instruction_ & 0xff) { // switch on low byte
+                case 0x9E:
+                    return &Chip8::op_Ex9E;
+                case 0xA1:
+                    return &Chip8::op_ExA1;
+                default:
+                    return &Chip8::op_INVALID;
+            }
+        case 0xF:
+            switch (instruction_ & 0xff) { // switch on low byte
+                case 0x07:
+                    return &Chip8::op_Fx07;
+                case 0x0A:
+                    return &Chip8::op_Fx0A;
+                case 0x15:
+                    return &Chip8::op_Fx15;
+                case 0x18:
+                    return &Chip8::op_Fx18;
+                case 0x1E:
+                    return &Chip8::op_Fx1E;
+                case 0x29:
+                    return &Chip8::op_Fx29;
+                case 0x33:
+                    return &Chip8::op_Fx33;
+                case 0x55:
+                    return &Chip8::op_Fx55;
+                case 0x65:
+                    return &Chip8::op_Fx65;
+                default:
+                    return &Chip8::op_INVALID;
+            }
+        default:
+            return &Chip8::op_INVALID;
+    }
+}
+
+void Chip8::execute(OpFunc func)
+{
+    std::invoke(func, this);
+}
+
+void Chip8::cycle()
+{
+    // Fetch current instruction
+    const auto opcode = fetch();
+
+    // Increment program counter
+    pc_ += 2;
+
+    // Decode opcode
+    const auto op_func = decode();
+
+    // Execute instruction
+    execute(op_func);
+
+    // Decrement timers if active
+    if (dt_ > 0) {
+        --dt_;
+    }
+    if (st_ > 0) {
+        --st_;
+    }
 }
 
 void Chip8::op_00E0()
@@ -320,12 +449,9 @@ void Chip8::op_Fx65()
     }
 }
 
-void Chip8::fetch()
+void Chip8::op_INVALID()
 {
-    const auto high = memory_[pc_];
-    const auto low = memory_[pc_ + 1];
-    instruction_ = static_cast<std::uint16_t>((high << 8u) | low);
-    pc_ += 2;
+    throw std::runtime_error("Invalid instruction");
 }
 
 std::uint16_t Chip8::op_var_nnn() const noexcept
