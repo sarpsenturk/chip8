@@ -5,6 +5,10 @@
 #include <SDL3/SDL_main.h>
 #include <SDL3/SDL_render.h>
 
+#include <imgui.h>
+#include <imgui_impl_sdl3.h>
+#include <imgui_impl_sdlrenderer3.h>
+
 #include <string>
 
 static constexpr auto cycles_per_frame = 10;
@@ -62,6 +66,7 @@ int main(int argc, const char** argv)
     SDL_Init(SDL_INIT_VIDEO);
 
     // Create window
+    float main_scale = SDL_GetDisplayContentScale(SDL_GetPrimaryDisplay());
     SDL_Window* window = SDL_CreateWindow(
         "Chip8",
         Chip8::display_width * scale,
@@ -88,6 +93,30 @@ int main(int argc, const char** argv)
         return 1;
     }
 
+    // Setup Dear ImGui context
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+    (void)io;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;     // Enable Docking
+
+    // Setup Dear ImGui style
+    ImGui::StyleColorsDark();
+    // ImGui::StyleColorsLight();
+
+    // Setup scaling
+    ImGuiStyle& style = ImGui::GetStyle();
+    style.ScaleAllSizes(main_scale); // Bake a fixed style scale. (until we have a solution for dynamic style scaling, changing this requires resetting Style + calling this again)
+    style.FontScaleDpi = main_scale; // Set initial font scale. (in docking branch: using io.ConfigDpiScaleFonts=true automatically overrides this for every window depending on the current monitor)
+    // io.ConfigDpiScaleFonts = true;        // [Experimental] Automatically overwrite style.FontScaleDpi in Begin() when Monitor DPI changes. This will scale fonts but _NOT_ scale sizes/padding for now.
+    // io.ConfigDpiScaleViewports = true;    // [Experimental] Scale Dear ImGui and Platform Windows when Monitor DPI changes.
+
+    // Setup Platform/Renderer backends
+    ImGui_ImplSDL3_InitForSDLRenderer(window, renderer);
+    ImGui_ImplSDLRenderer3_Init(renderer);
+
     // Main loop
     auto last = std::chrono::high_resolution_clock::now();
     while (true) {
@@ -97,6 +126,7 @@ int main(int argc, const char** argv)
 
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
+            ImGui_ImplSDL3_ProcessEvent(&event);
             switch (event.type) {
                 case SDL_EVENT_QUIT:
                     goto exit;
@@ -123,9 +153,22 @@ int main(int argc, const char** argv)
         }
         chip8.tick_timers();
 
-        SDL_UpdateTexture(texture, nullptr, chip8.pixels(), Chip8::display_pitch);
+        // Start the Dear ImGui frame
+        ImGui_ImplSDLRenderer3_NewFrame();
+        ImGui_ImplSDL3_NewFrame();
+        ImGui::NewFrame();
+
+        ImGui::ShowDemoWindow();
+
+        // Rendering
         SDL_RenderClear(renderer);
+
+        SDL_UpdateTexture(texture, nullptr, chip8.pixels(), Chip8::display_pitch);
         SDL_RenderTexture(renderer, texture, nullptr, nullptr);
+
+        ImGui::Render();
+        ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), renderer);
+
         SDL_RenderPresent(renderer);
     }
 
