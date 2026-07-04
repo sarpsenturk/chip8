@@ -57,7 +57,7 @@ std::int32_t Chip8::load_rom(const char* path)
             return size;
         }
     } else {
-        return false;
+        return -1;
     }
 }
 

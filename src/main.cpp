@@ -66,7 +66,7 @@ static constexpr SDL_DialogFileFilter rom_filters[] = {
 // Callback function on ROM load
 void on_rom_loaded(const char* path, std::int32_t size)
 {
-    SDL_Log("Loaded ROM %s with size %uz", path, size);
+    SDL_Log("Loaded ROM %s with size %d", path, size);
     std::strncpy(current_rom, path, std::strlen(path));
 }
 
@@ -174,13 +174,11 @@ int main(int argc, const char** argv)
                 case SDL_EVENT_KEY_DOWN: {
                     if (const auto key = keymap(event.key.key); key != -1) {
                         chip8.set_key_down(static_cast<std::uint8_t>(key));
-                        SDL_Log("Keydown = %i\n", key);
                     }
                 } break;
                 case SDL_EVENT_KEY_UP: {
                     if (const auto key = keymap(event.key.key); key != -1) {
                         chip8.set_key_up(static_cast<std::uint8_t>(key));
-                        SDL_Log("Keyup = %i\n", key);
                     }
                 } break;
             }
