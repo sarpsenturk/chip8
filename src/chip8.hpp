@@ -21,7 +21,7 @@ public:
     Chip8();
 
     // Loads a ROM into memory at `prog_start_addr` (0x200)
-    bool load_rom(const char* path);
+    std::int32_t load_rom(const char* path);
 
     std::uint16_t fetch();     // Fetch the next instruction into the instruction register
     OpFunc decode();           // Decode the instruction and return the op function pointer

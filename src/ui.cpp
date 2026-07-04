@@ -4,9 +4,22 @@
 #include <imgui.h>
 #include <imgui_internal.h>
 
-void ImGui_Chip8_MainMenuBar()
+void ImGui_Chip8_MainMenuBar(const MainMenuState& state)
 {
     if (ImGui::BeginMainMenuBar()) {
+        if (ImGui::BeginMenu("File")) {
+            if (ImGui::MenuItem("Load ROM")) {
+                SDL_ShowOpenFileDialog(
+                    state.file_dialog_callback,
+                    state.userdata,
+                    state.window,
+                    state.filters,
+                    state.nfilters,
+                    nullptr,
+                    false);
+            }
+            ImGui::EndMenu();
+        }
         ImGui::EndMainMenuBar();
     }
 }

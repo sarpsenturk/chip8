@@ -10,9 +10,11 @@
 #include <imgui_impl_sdl3.h>
 #include <imgui_impl_sdlrenderer3.h>
 
+#include <cstring>
 #include <string>
 
 static constexpr auto cycles_per_frame = 10;
+
 static constexpr auto keymap(SDL_Keycode keycode)
 {
     switch (keycode) {
@@ -53,6 +55,40 @@ static constexpr auto keymap(SDL_Keycode keycode)
     }
 }
 
+// Currently loaded ROM name/filepath
+static char current_rom[512] = {};
+
+// Filters for ROM selection dialog
+static constexpr SDL_DialogFileFilter rom_filters[] = {
+    {"CH8 ROM", "ch8"},
+};
+
+// Callback function on ROM load
+void on_rom_loaded(const char* path, std::int32_t size)
+{
+    SDL_Log("Loaded ROM %s with size %uz", path, size);
+    std::strncpy(current_rom, path, std::strlen(path));
+}
+
+// SDL file dialog callback
+void file_dialog_callback(void* userdata, const char* const* filelist, int filter)
+{
+    if (filelist == nullptr) {
+        SDL_LogError(SDL_LOG_CATEGORY_ERROR, "An error occured while opening a file: %s", SDL_GetError());
+        return;
+    } else if (*filelist == nullptr) {
+        SDL_Log("File dialog was cancelled");
+        return;
+    }
+
+    auto* chip8 = static_cast<Chip8*>(userdata);
+    if (const auto size = chip8->load_rom(*filelist); size != -1) {
+        on_rom_loaded(*filelist, size);
+    } else {
+        SDL_LogError(SDL_LOG_CATEGORY_ERROR, "An error occured while loading the ROM: %s", std::strerror(errno));
+    }
+}
+
 int main(int argc, const char** argv)
 {
     // Parse command line arguments
@@ -90,7 +126,10 @@ int main(int argc, const char** argv)
 
     // Initialize interpreter
     Chip8 chip8;
-    if (!chip8.load_rom(rom)) {
+    SDL_Log("Chip8 interpreter initialized");
+    if (const auto size = chip8.load_rom(rom); size != -1) {
+        on_rom_loaded(rom, size);
+    } else {
         SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Failed to open ROM: %s\n", rom);
         return 1;
     }
@@ -161,7 +200,13 @@ int main(int argc, const char** argv)
         ImGui::NewFrame();
 
         // Submit menu bar
-        ImGui_Chip8_MainMenuBar();
+        ImGui_Chip8_MainMenuBar({
+            .file_dialog_callback = file_dialog_callback,
+            .userdata = &chip8,
+            .window = window,
+            .filters = &rom_filters[0],
+            .nfilters = 1,
+        });
 
         // Submit dockspace
         ImGui_Chip8_SetupLayout();

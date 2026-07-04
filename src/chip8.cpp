@@ -39,33 +39,22 @@ std::uint8_t random_byte()
     return dist(re);
 }
 
-// Log a message to stdout
-template<typename... Args>
-void debug_log(std::format_string<Args...> fmt, Args&&... args)
-{
-    const auto msg = std::format(fmt, std::forward<Args>(args)...);
-    std::printf("-- %s\n", msg.c_str());
-}
-
 Chip8::Chip8()
 {
-    debug_log("Chip8 interpreter");
     std::memcpy(memory_.data() + fontset_start_addr, fontset.data(), 80);
-    debug_log("Fontset loaded into memory at {:#x}", fontset_start_addr);
-    debug_log("PC = {:#x}", pc_);
 }
 
-bool Chip8::load_rom(const char* path)
+std::int32_t Chip8::load_rom(const char* path)
 {
     auto file = std::ifstream(path, std::ios::binary | std::ios::ate);
     if (file.good()) {
         const auto size = file.tellg();
         file.seekg(0, std::ios::beg);
-        if (file.read(reinterpret_cast<char*>(memory_.data() + prog_start_addr), size)) {
-            debug_log("Loaded ROM {} with size {}", path, static_cast<int>(size));
-            return true;
+        if (!file.read(reinterpret_cast<char*>(memory_.data() + prog_start_addr), size)) {
+            return -1;
         } else {
-            return false;
+            pc_ = prog_start_addr;
+            return size;
         }
     } else {
         return false;
@@ -89,7 +78,6 @@ Chip8::OpFunc Chip8::decode()
             if (instruction_ == 0x00EE) {
                 return &Chip8::op_00EE;
             }
-            debug_log("invalid instruction: {:#x}", instruction_);
             return &Chip8::op_INVALID;
         case 1:
             return &Chip8::op_1nnn;
