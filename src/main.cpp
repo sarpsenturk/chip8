@@ -1,4 +1,5 @@
 #include "chip8.hpp"
+#include "ui.hpp"
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_log.h>
@@ -55,12 +56,13 @@ static constexpr auto keymap(SDL_Keycode keycode)
 int main(int argc, const char** argv)
 {
     // Parse command line arguments
-    if (argc != 3) {
-        SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Usage: %s [scale] [ROM]\n", argv[0]);
+    if (argc != 4) {
+        SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Usage: %s [width] [height] [ROM]\n", argv[0]);
         return 1;
     }
-    const auto scale = std::stoi(argv[1]);
-    const char* rom = argv[2];
+    const auto width = std::stoi(argv[1]);
+    const auto height = std::stoi(argv[2]);
+    const char* rom = argv[3];
 
     // Initialize SDL
     SDL_Init(SDL_INIT_VIDEO);
@@ -69,9 +71,9 @@ int main(int argc, const char** argv)
     float main_scale = SDL_GetDisplayContentScale(SDL_GetPrimaryDisplay());
     SDL_Window* window = SDL_CreateWindow(
         "Chip8",
-        Chip8::display_width * scale,
-        Chip8::display_height * scale,
-        0);
+        width * main_scale,
+        height * main_scale,
+        SDL_WINDOW_RESIZABLE);
 
     // Create renderer
     SDL_Renderer* renderer = SDL_CreateRenderer(window, nullptr);
@@ -158,7 +160,18 @@ int main(int argc, const char** argv)
         ImGui_ImplSDL3_NewFrame();
         ImGui::NewFrame();
 
-        ImGui::ShowDemoWindow();
+        // Submit menu bar
+        ImGui_Chip8_MainMenuBar();
+
+        // Submit dockspace
+        ImGui_Chip8_SetupLayout();
+
+        // Submit windows
+
+        ImGui_Chip8_DisplayWindow("Display", (ImTextureID)texture, static_cast<float>(Chip8::display_width) / Chip8::display_height);
+        ImGui_Chip8_StateWindow("State", chip8);
+
+        // ImGui::ShowDemoWindow();
 
         // Rendering
         SDL_RenderClear(renderer);
