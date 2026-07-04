@@ -67,7 +67,9 @@ static constexpr SDL_DialogFileFilter rom_filters[] = {
 void on_rom_loaded(const char* path, std::int32_t size)
 {
     SDL_Log("Loaded ROM %s with size %d", path, size);
-    std::strncpy(current_rom, path, std::strlen(path));
+    const auto len = std::strlen(path);
+    std::strncpy(current_rom, path, len);
+    current_rom[len] = 0;
 }
 
 // SDL file dialog callback
@@ -211,8 +213,16 @@ int main(int argc, const char** argv)
 
         // Submit windows
 
-        ImGui_Chip8_DisplayWindow("Display", (ImTextureID)texture, static_cast<float>(Chip8::display_width) / Chip8::display_height);
-        ImGui_Chip8_StateWindow("State", chip8);
+        ImGui_Chip8_DisplayWindow({
+            .name = "Display",
+            .display = (ImTextureID)texture,
+            .aspect = static_cast<float>(Chip8::display_width) / Chip8::display_height,
+        });
+        ImGui_Chip8_InterpreterWindow({
+            .name = "State",
+            .program = current_rom,
+            .chip8 = chip8,
+        });
 
         // ImGui::ShowDemoWindow();
 

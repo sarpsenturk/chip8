@@ -34,7 +34,7 @@ void ImGui_Chip8_SetupLayout()
         ImGui::DockBuilderSetNodeSize(dockspace_id, viewport->Size);
         ImGuiID dock_id_left = 0;
         ImGuiID dock_id_main = dockspace_id;
-        ImGui::DockBuilderSplitNode(dock_id_main, ImGuiDir_Left, 0.20f, &dock_id_left, &dock_id_main);
+        ImGui::DockBuilderSplitNode(dock_id_main, ImGuiDir_Left, 0.25f, &dock_id_left, &dock_id_main);
         ImGui::DockBuilderDockWindow("Display", dock_id_main);
         ImGui::DockBuilderDockWindow("State", dock_id_left);
         ImGui::DockBuilderFinish(dockspace_id);
@@ -44,53 +44,51 @@ void ImGui_Chip8_SetupLayout()
     ImGui::DockSpaceOverViewport(dockspace_id, viewport, ImGuiDockNodeFlags_PassthruCentralNode);
 }
 
-void ImGui_Chip8_DisplayWindow(const char* name, ImTextureID display, float aspect)
+void ImGui_Chip8_DisplayWindow(const DisplayWindowState& state)
 {
     // Override docknode flags
     ImGuiWindowClass window_class;
     window_class.DockNodeFlagsOverrideSet = ImGuiDockNodeFlags_NoTabBar;
 
     ImGui::SetNextWindowClass(&window_class);
-    ImGui::Begin(name, nullptr, ImGuiWindowFlags_NoDecoration);
+    ImGui::Begin(state.name, nullptr, ImGuiWindowFlags_NoDecoration);
 
     // Calculate size based on display aspect ratio
     ImVec2 size = ImGui::GetContentRegionAvail();
-    if (size.x / size.y > aspect) {
-        size.x = size.y * aspect;
+    if (size.x / size.y > state.aspect) {
+        size.x = size.y * state.aspect;
     } else {
-        size.y = size.x / aspect;
+        size.y = size.x / state.aspect;
     }
 
-    ImGui::Image(display, size);
+    ImGui::Image(state.display, size);
     ImGui::End();
 }
 
-void ImGui_Chip8_StateWindow(const char* name, const class Chip8& chip8)
-{ // Override docknode flags
-    ImGuiWindowClass window_class;
-    window_class.DockNodeFlagsOverrideSet = ImGuiDockNodeFlags_NoTabBar;
-
-    ImGui::Begin(name);
+void ImGui_Chip8_InterpreterWindow(const InterpreterWindowState& state)
+{
+    ImGui::Begin(state.name);
 
     ImGui::Text("PROGRAM");
-    ImGui::Text("PC = %#04x", chip8.program_counter());
+    ImGui::Text("%s", state.program);
+    ImGui::Text("PC = %#04x", state.chip8.program_counter());
 
     ImGui::Separator();
 
     ImGui::Text("REGISTERS");
-    ImGui::Text("Index = %u", chip8.index_register());
+    ImGui::Text("Index = %u", state.chip8.index_register());
     for (std::uint8_t x = 0; x < 8; ++x) {
-        ImGui::Text("V%x = %u", x, chip8.registers(x));
+        ImGui::Text("V%x = %u", x, state.chip8.registers(x));
         ImGui::SameLine(150.f);
-        ImGui::Text("V%x = %u", x + 8, chip8.registers(x + 8));
+        ImGui::Text("V%x = %u", x + 8, state.chip8.registers(x + 8));
     }
 
     ImGui::Separator();
 
     ImGui::Text("TIMERS");
-    ImGui::Text("DT = %u", chip8.delay_timer());
+    ImGui::Text("DT = %u", state.chip8.delay_timer());
     ImGui::SameLine(150.f);
-    ImGui::Text("ST = %u", chip8.sound_timer());
+    ImGui::Text("ST = %u", state.chip8.sound_timer());
 
     ImGui::End();
 }

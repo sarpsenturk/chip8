@@ -11,7 +11,19 @@ struct MainMenuState {
     int nfilters;
 };
 
+struct DisplayWindowState {
+    const char* name;
+    ImTextureID display;
+    float aspect;
+};
+
+struct InterpreterWindowState {
+    const char* name;
+    const char* program;
+    const class Chip8& chip8;
+};
+
 void ImGui_Chip8_MainMenuBar(const MainMenuState& data);
 void ImGui_Chip8_SetupLayout();
-void ImGui_Chip8_DisplayWindow(const char* name, ImTextureID display, float aspect);
-void ImGui_Chip8_StateWindow(const char* name, const class Chip8& chip8);
+void ImGui_Chip8_DisplayWindow(const DisplayWindowState& state);
+void ImGui_Chip8_InterpreterWindow(const InterpreterWindowState& state);
