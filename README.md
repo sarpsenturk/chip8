@@ -48,18 +48,19 @@ cmake --build build
 ## Running
 
 ```bash
-./build/chip8 [scale] [rom]
+./build/chip8 [width] [height] [rom]
 ```
 
 Where:
 
-* `scale` is the display scaling factor.
+* `width` is the window width.
+* `height` is the window height.
 * `rom` is the path to a CHIP-8 ROM.
 
 Example:
 
 ```bash
-./build/chip8 12 roms/PONG.ch8
+./build/chip8 1200 800 test-roms/1-chip8-logo.ch8
 ```
 
 ## Compatibility
