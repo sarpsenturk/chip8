@@ -2,16 +2,14 @@
 
 #include <cassert>
 #include <cstdint>
-#include <cstdio>
 #include <cstring>
-#include <format>
 #include <fstream>
 #include <functional>
 #include <random>
 #include <stdexcept>
 
 // Sprite data for the builtin fontset
-static constexpr auto fontset = std::array{
+static constexpr std::array<std::uint8_t, 80> fontset = {
     0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
     0x20, 0x60, 0x20, 0x20, 0x70, // 1
     0xF0, 0x10, 0xF0, 0x80, 0xF0, // 2
@@ -29,6 +27,8 @@ static constexpr auto fontset = std::array{
     0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
     0xF0, 0x80, 0xF0, 0x80, 0x80  // F
 };
+static_assert(sizeof(fontset[0]) == 1);
+static_assert(sizeof(fontset) == 80);
 
 // Random number generator
 std::uint8_t random_byte()
@@ -41,7 +41,7 @@ std::uint8_t random_byte()
 
 Chip8::Chip8()
 {
-    std::memcpy(memory_.data() + fontset_start_addr, fontset.data(), 80);
+    std::memcpy(memory_.data() + fontset_start_addr, fontset.data(), sizeof(fontset));
 }
 
 std::int32_t Chip8::load_rom(const char* path)
@@ -484,6 +484,7 @@ void Chip8::op_Fx1E()
 void Chip8::op_Fx29()
 {
     const auto x = op_var_x();
+    assert(V_[x] <= 0xf);
     I_ = static_cast<std::uint16_t>(fontset_start_addr + V_[x] * 5);
 }
 
