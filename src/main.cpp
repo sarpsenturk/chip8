@@ -64,11 +64,11 @@ int main(int argc, const char** argv)
 {
     // Parse command line arguments. The window resolution is now chosen from
     // the UI, so the only optional argument left is a ROM to load at startup.
-    if (argc > 2) {
+    if (argc != 2) {
         SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Usage: %s [ROM]\n", argv[0]);
         return 1;
     }
-    const char* rom = argc == 2 ? argv[1] : nullptr;
+    const char* rom = argv[1];
 
     // Initialize SDL
     SDL_Init(SDL_INIT_VIDEO);
@@ -101,12 +101,10 @@ int main(int argc, const char** argv)
     // Initialize interpreter
     Chip8 chip8;
     SDL_Log("Chip8 interpreter initialized");
-    if (rom != nullptr) {
-        if (const auto size = chip8.load_rom(rom); size != -1) {
-            on_rom_loaded(rom, size);
-        } else {
-            SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Failed to open ROM: %s\n", rom);
-        }
+    if (const auto size = chip8.load_rom(rom); size != -1) {
+        on_rom_loaded(rom, size);
+    } else {
+        SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Failed to open ROM: %s\n", rom);
     }
 
     // Setup Dear ImGui context
