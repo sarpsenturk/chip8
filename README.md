@@ -4,8 +4,6 @@ A CHIP-8 interpreter written in modern C++20 using SDL3.
 
 The project implements the complete original CHIP-8 instruction set and aims to provide accurate behavior while maintaining a clean, modern, and easy-to-read codebase.
 
-> **Project Status:** Under active development. Additional debugging tools, configuration options, and UI features are planned.
-
 ## Features
 
 * Complete original CHIP-8 instruction set
@@ -17,18 +15,6 @@ The project implements the complete original CHIP-8 instruction set and aims to 
 * Cross-platform (Windows, Linux, and macOS)
 * Modern C++20 codebase
 * CMake build system
-
-### Planned Features
-
-* ImGui debugging interface
-* Single-step execution
-* Runtime configuration
-
-  * FPS
-  * CPU speed
-  * Display colors
-* Improved audio controls
-* Additional debugging utilities
 
 ## Building
 
@@ -48,19 +34,17 @@ cmake --build build
 ## Running
 
 ```bash
-./build/chip8 [width] [height] [rom]
+./build/chip8 [rom]
 ```
 
 Where:
 
-* `width` is the window width.
-* `height` is the window height.
 * `rom` is the path to a CHIP-8 ROM.
 
 Example:
 
 ```bash
-./build/chip8 1200 800 test-roms/1-chip8-logo.ch8
+./build/chip8 test-roms/1-chip8-logo.ch8
 ```
 
 ## Compatibility
@@ -78,12 +62,7 @@ The interpreter has been verified against Timendus' CHIP-8 test suite and curren
 
 ## Screenshots
 
-*Screenshots and animated GIFs will be added as the project evolves.*
+![IBM Logo](images/ibm-logo.png)
+![CHIP-8 Logo](images/chip8-logo.png)
+![Breakout](images/breakout.png)
 
-## Roadmap
-
-* [ ] ImGui-based UI & debugger
-* [ ] Single-step execution
-* [ ] Runtime configuration UI
-* [ ] Improved audio support
-* [ ] Additional debugging tools
